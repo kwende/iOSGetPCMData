@@ -6,6 +6,6 @@ namespace iOSGetPCMData
     {
         void Start();
 
-        event Action<int> OnBufferRead;
+        event Action<byte[]> OnBufferRead;
     }
 }

@@ -1,6 +1,7 @@
 ﻿using AVFoundation;
 using Foundation;
 using System;
+using System.Runtime.InteropServices;
 
 namespace iOSGetPCMData.iOS
 {
@@ -12,8 +13,7 @@ namespace iOSGetPCMData.iOS
         AVAudioConverter _audioConverter;
         AVAudioFormat _destinationFormat;
 
-        public event Action<int> OnBufferRead;
-        private int _bufferCount = 0;
+        public event Action<byte[]> OnBufferRead;
 
         private void EnsureAudioPermissionsAndTapTheMicrophone()
         {
@@ -46,16 +46,14 @@ namespace iOSGetPCMData.iOS
             var audioBuffer = new AVAudioPcmBuffer(_destinationFormat, (uint)(_destinationFormat.SampleRate * 2));
             _buffer = buffer;
 
-            //AVAudioBuffer AVAudioConverterInputHandler(uint inNumberOfPackets, out AVAudioConverterInputStatus outStatus);
-
             var result = _audioConverter.ConvertToBuffer(audioBuffer, out _, Turd);
 
-            //NSError error = null;
-            //bool success = _audioConverter.ConvertToBuffer(audioBuffer, buffer, out error);
+            byte[] rawBytes = new byte[audioBuffer.FrameLength * 2];
+            Marshal.Copy(audioBuffer.Int16ChannelData, rawBytes, 0, rawBytes.Length);
 
             if (result == AVAudioConverterOutputStatus.HaveData)
             {
-                OnBufferRead?.Invoke(++_bufferCount);
+                OnBufferRead?.Invoke(rawBytes);
             }
         }
 
@@ -81,6 +79,9 @@ namespace iOSGetPCMData.iOS
 
         public void Start()
         {
+            AVAudioSession.SharedInstance().SetCategory(AVAudioSessionCategory.PlayAndRecord, AVAudioSessionCategoryOptions.DefaultToSpeaker);
+            AVAudioSession.SharedInstance().SetActive(true);
+
             EnsureAudioPermissionsAndTapTheMicrophone();
         }
     }
