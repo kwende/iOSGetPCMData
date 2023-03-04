@@ -34,7 +34,7 @@ namespace StupidServer
 
                 if (lastReceiveTime != DateTimeOffset.MinValue)
                 {
-                    double kbps = (bytesRead * 8) / 1000 / (now - lastReceiveTime).TotalSeconds;
+                    double kbps = bytesRead * 8 / 1000 / (now - lastReceiveTime).TotalSeconds;
                     Console.WriteLine($"{kbps} kpbs");
                 }
 
