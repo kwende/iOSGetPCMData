@@ -1,6 +1,7 @@
 ﻿using AVFoundation;
 using Foundation;
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace iOSGetPCMData.iOS
@@ -14,6 +15,8 @@ namespace iOSGetPCMData.iOS
         AVAudioFormat _destinationFormat;
 
         public event Action<byte[]> OnBufferRead;
+
+        private DateTimeOffset _lastSend = DateTimeOffset.MinValue;
 
         private void EnsureAudioPermissionsAndTapTheMicrophone()
         {
@@ -40,9 +43,12 @@ namespace iOSGetPCMData.iOS
         }
 
         AVAudioPcmBuffer _buffer;
+        private int _processedBits = 0;
 
         private void MicrophoneBusTapCallback(AVAudioPcmBuffer buffer, AVAudioTime when)
         {
+            DateTimeOffset now = DateTimeOffset.Now;
+
             var audioBuffer = new AVAudioPcmBuffer(_destinationFormat, (uint)(_destinationFormat.SampleRate * 2));
             _buffer = buffer;
 
@@ -51,9 +57,26 @@ namespace iOSGetPCMData.iOS
             byte[] rawBytes = new byte[audioBuffer.FrameLength * 2];
             Marshal.Copy(audioBuffer.Int16ChannelData, rawBytes, 0, rawBytes.Length);
 
+            _processedBits += (rawBytes.Length * 8);
+
             if (result == AVAudioConverterOutputStatus.HaveData)
             {
                 OnBufferRead?.Invoke(rawBytes);
+            }
+
+            if (_lastSend == DateTimeOffset.MinValue)
+            {
+                _lastSend = now;
+            }
+            else
+            {
+                double totalSeconds = (now - _lastSend).TotalSeconds;
+
+                double kbps = _processedBits / 1000 / totalSeconds;
+
+                Debug.WriteLine($"{kbps} kbps");
+
+                _processedBits = 0;
             }
         }
 

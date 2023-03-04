@@ -27,11 +27,20 @@ namespace StupidServer
             Console.WriteLine("Connection established.");
 
             int bytesRead = 0;
+            DateTimeOffset lastReceiveTime = DateTimeOffset.MinValue;
             while ((bytesRead = socket.Receive(buffer)) > 0)
             {
-                Console.WriteLine($"Read {bytesRead} bytes.");
+                DateTimeOffset now = DateTimeOffset.Now;
+
+                if (lastReceiveTime != DateTimeOffset.MinValue)
+                {
+                    double kbps = (bytesRead * 8) / 1000 / (now - lastReceiveTime).TotalSeconds;
+                    Console.WriteLine($"{kbps} kpbs");
+                }
 
                 waveProvider.AddSamples(buffer, 0, bytesRead);
+
+                lastReceiveTime = now;
             }
         }
     }
