@@ -17,7 +17,7 @@ namespace iOSGetPCMData.Views
         private void Button_Clicked(object sender, EventArgs e)
         {
             _tcpClient = new TcpClient();
-            _tcpClient.Connect("172.17.5.65", 8550);
+            _tcpClient.Connect("192.168.1.75", 8550);
 
             App.AudioEngine.OnBufferRead += AudioEngine_OnBufferRead;
             App.AudioEngine.Start();

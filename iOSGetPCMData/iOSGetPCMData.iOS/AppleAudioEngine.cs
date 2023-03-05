@@ -43,56 +43,70 @@ namespace iOSGetPCMData.iOS
         }
 
         AVAudioPcmBuffer _buffer;
-        private int _processedBits = 0;
+        private uint _samplesProcessed = 0;
 
         private void MicrophoneBusTapCallback(AVAudioPcmBuffer buffer, AVAudioTime when)
         {
-            DateTimeOffset now = DateTimeOffset.Now;
+            byte[] toSend = new byte[buffer.FrameLength * buffer.Format.StreamDescription.BytesPerFrame];
 
-            var audioBuffer = new AVAudioPcmBuffer(_destinationFormat, (uint)(_destinationFormat.SampleRate * 2));
-            _buffer = buffer;
+            IntPtr[] destination = new IntPtr[1];
 
-            var result = _audioConverter.ConvertToBuffer(audioBuffer, out _, Turd);
+            Marshal.Copy(buffer.Int32ChannelData, destination, 0, 1);
+            Marshal.Copy(destination[0], toSend, 0, toSend.Length);
 
-            byte[] rawBytes = new byte[audioBuffer.FrameLength * 2];
-            Marshal.Copy(audioBuffer.Int16ChannelData, rawBytes, 0, rawBytes.Length);
+            _samplesProcessed += buffer.FrameLength;
+            OnBufferRead?.Invoke(toSend);
 
-            _processedBits += (rawBytes.Length * 8);
+            Debug.WriteLine($"{_samplesProcessed} samples processed. Should be for {_samplesProcessed / 48000} seconds");
 
-            if (result == AVAudioConverterOutputStatus.HaveData)
-            {
-                OnBufferRead?.Invoke(rawBytes);
-            }
+            //DateTimeOffset now = DateTimeOffset.Now;
 
-            if (_lastSend == DateTimeOffset.MinValue)
-            {
-                _lastSend = now;
-            }
-            else
-            {
-                double totalSeconds = (now - _lastSend).TotalSeconds;
+            //var audioBuffer = new AVAudioPcmBuffer(_destinationFormat, (uint)(_destinationFormat.SampleRate * 2));
+            //_buffer = buffer;
 
-                double kbps = _processedBits / 1000 / totalSeconds;
+            //var result = _audioConverter.ConvertToBuffer(audioBuffer, out _, Turd);
 
-                Debug.WriteLine($"{kbps} kbps");
+            //byte[] rawBytes = new byte[audioBuffer.FrameLength * 2];
+            //Marshal.Copy(audioBuffer.Int16ChannelData, rawBytes, 0, rawBytes.Length);
 
-                _processedBits = 0;
-            }
+            //_processedBits += (rawBytes.Length * 8);
+
+            //if (result == AVAudioConverterOutputStatus.HaveData)
+            //{
+            //    OnBufferRead?.Invoke(rawBytes);
+            //}
+
+            //if (_lastSend == DateTimeOffset.MinValue)
+            //{
+            //    _lastSend = now;
+            //}
+            //else
+            //{
+            //    double totalSeconds = (now - _lastSend).TotalSeconds;
+
+            //    double kbps = _processedBits / 1000 / totalSeconds;
+
+            //    Debug.WriteLine($"{kbps} kbps");
+
+            //    _processedBits = 0;
+            //}
         }
 
         private void TapTheMicrophone()
         {
             _audioEngine = new AVAudioEngine();
-            var inputFormat = _audioEngine.InputNode.GetBusOutputFormat(0);
+            //var inputFormat = _audioEngine.InputNode.GetBusOutputFormat(0);
+
+            var desired = new AVAudioFormat(AVAudioCommonFormat.PCMInt32, 48000, 1, true);
 
             _audioEngine.InputNode.InstallTapOnBus(
                 0, // 0 = "default bus"
                 SAMPLE_RATE * 2, // buffer size, is this right? 
-                inputFormat,
+                desired,
                 MicrophoneBusTapCallback);
 
             _destinationFormat = new AVAudioFormat(AVAudioCommonFormat.PCMInt16, SAMPLE_RATE, 1, true);
-            _audioConverter = new AVAudioConverter(inputFormat, _destinationFormat);
+            _audioConverter = new AVAudioConverter(desired, _destinationFormat);
 
             _audioEngine.Prepare();
 

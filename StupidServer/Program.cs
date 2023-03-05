@@ -9,14 +9,15 @@ namespace StupidServer
     {
         static void Main(string[] args)
         {
-            WaveFormat waveFormat = new WaveFormat(16000, 16, 1);
+            WaveFormat waveFormat = new WaveFormat(48000, 32, 1);
+            //WaveFormat waveFormat = new WaveFormat(16000, 16, 1);
 
             var waveOut = new WaveOut();
             var waveProvider = new BufferedWaveProvider(waveFormat);
             waveOut.Init(waveProvider);
             waveOut.Play();
 
-            TcpListener listener = new TcpListener(IPAddress.Parse("172.17.5.65"), 8550);
+            TcpListener listener = new TcpListener(IPAddress.Parse("192.168.1.75"), 8550);
             listener.Start();
 
             Console.WriteLine("Awaiting connection.");
@@ -26,21 +27,32 @@ namespace StupidServer
 
             Console.WriteLine("Connection established.");
 
+            uint totalBytesRead = 0;
             int bytesRead = 0;
             DateTimeOffset lastReceiveTime = DateTimeOffset.MinValue;
-            while ((bytesRead = socket.Receive(buffer)) > 0)
+            //using (FileStream fout = File.Create("C:/users/ben/desktop/default.pcm"))
             {
-                DateTimeOffset now = DateTimeOffset.Now;
-
-                if (lastReceiveTime != DateTimeOffset.MinValue)
+                //for (int c = 0; c < 15; c++)
+                while ((bytesRead = socket.Receive(buffer)) > 0)
                 {
-                    double kbps = bytesRead * 8 / 1000 / (now - lastReceiveTime).TotalSeconds;
-                    Console.WriteLine($"{kbps} kpbs");
+                    //int bytesRead = socket.Receive(buffer);
+                    //DateTimeOffset now = DateTimeOffset.Now;
+
+                    //if (lastReceiveTime != DateTimeOffset.MinValue)
+                    //{
+                    //    double kbps = bytesRead * 8 / 1000 / (now - lastReceiveTime).TotalSeconds;
+                    //    Console.WriteLine($"{kbps} kpbs");
+                    //}
+
+                    //fout.Write(buffer, 0, bytesRead);
+
+                    waveProvider.AddSamples(buffer, 0, bytesRead);
+                    totalBytesRead += (uint)bytesRead;
+
+                    Console.WriteLine($"Read {totalBytesRead / (48000 * 4)} seconds of audio data");
+
+                    //lastReceiveTime = now;
                 }
-
-                waveProvider.AddSamples(buffer, 0, bytesRead);
-
-                lastReceiveTime = now;
             }
         }
     }
