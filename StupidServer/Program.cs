@@ -9,8 +9,8 @@ namespace StupidServer
     {
         static void Main(string[] args)
         {
-            WaveFormat waveFormat = new WaveFormat(48000, 32, 1);
-            //WaveFormat waveFormat = new WaveFormat(16000, 16, 1);
+            //WaveFormat waveFormat = new WaveFormat(48000, 32, 1);
+            WaveFormat waveFormat = new WaveFormat(16000, 16, 1);
 
             var waveOut = new WaveOut();
             var waveProvider = new BufferedWaveProvider(waveFormat);
@@ -49,7 +49,7 @@ namespace StupidServer
                     waveProvider.AddSamples(buffer, 0, bytesRead);
                     totalBytesRead += (uint)bytesRead;
 
-                    Console.WriteLine($"Read {totalBytesRead / (48000 * 4)} seconds of audio data");
+                    Console.WriteLine($"Read {totalBytesRead / (38400 * 2)} seconds of audio data");
 
                     //lastReceiveTime = now;
                 }
