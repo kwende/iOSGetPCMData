@@ -30,7 +30,17 @@ namespace iOSGetPCMData.iOS
 
         public static AVAudioPcmBuffer Bytes2PCMBuffer(byte[] input)
         {
-            throw new NotImplementedException();
+            AVAudioFormat audioFormat = new AVAudioFormat(AVAudioCommonFormat.PCMInt16, 16000, 1, false);
+            uint numberOfFramesInData = (uint)(input.Length / audioFormat.StreamDescription.BytesPerFrame);
+            AVAudioPcmBuffer ret = new AVAudioPcmBuffer(audioFormat, numberOfFramesInData);
+
+            IntPtr[] channelPtrs = new IntPtr[1];
+            Marshal.Copy(ret.Int32ChannelData, channelPtrs, 0, 1);
+            Marshal.Copy(input, 0, channelPtrs[0], input.Length);
+
+            ret.FrameLength = numberOfFramesInData;
+
+            return ret;
         }
     }
 }

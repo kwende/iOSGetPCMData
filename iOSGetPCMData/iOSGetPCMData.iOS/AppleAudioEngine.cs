@@ -11,7 +11,6 @@ namespace iOSGetPCMData.iOS
 
         AVAudioEngine _audioEngine;
         AudioFormatConverter _phone2NAudioConverter, _nAudio2PhoneConverter;
-        AVAudioFormat nAudioFormat, _iPhoneFormat;
         AVAudioPlayerNode _player;
 
         public event Action<byte[]> OnBufferRead;
@@ -48,59 +47,14 @@ namespace iOSGetPCMData.iOS
             {
                 OnBufferRead?.Invoke(AVAudioPCMBufferByteConverter.PCMBuffer2Bytes(audioBuffer4NAudio));
             }
-
-            //byte[] toSend = new byte[convertedAudioBuffer.FrameLength * convertedAudioBuffer.Format.StreamDescription.BytesPerFrame];
-
-            //IntPtr[] channelPointerArray = new IntPtr[1];
-
-            //Marshal.Copy(convertedAudioBuffer.Int16ChannelData, channelPointerArray, 0, 1);
-            //Marshal.Copy(channelPointerArray[0], toSend, 0, toSend.Length);
-
-            //_samplesProcessed += convertedAudioBuffer.FrameLength;
-            //OnBufferRead?.Invoke(toSend);
-
-            //Debug.WriteLine($"{convertedAudioBuffer.FrameLength} rate. {_samplesProcessed} samples processed in total. Should be for {_samplesProcessed / 16000} seconds");tReadBuffer = buffer;
-
-
-            //DateTimeOffset now = DateTimeOffset.Now;
-
-            //var audioBuffer = new AVAudioPcmBuffer(_destinationFormat, (uint)(_destinationFormat.SampleRate * 2));
-            //_buffer = buffer;
-
-            //var result = _audioConverter.ConvertToBuffer(audioBuffer, out _, Turd);
-
-            //byte[] rawBytes = new byte[audioBuffer.FrameLength * 2];
-            //Marshal.Copy(audioBuffer.Int16ChannelData, rawBytes, 0, rawBytes.Length);
-
-            //_processedBits += (rawBytes.Length * 8);
-
-            //if (result == AVAudioConverterOutputStatus.HaveData)
-            //{
-            //    OnBufferRead?.Invoke(rawBytes);
-            //}
-
-            //if (_lastSend == DateTimeOffset.MinValue)
-            //{
-            //    _lastSend = now;
-            //}
-            //else
-            //{
-            //    double totalSeconds = (now - _lastSend).TotalSeconds;
-
-            //    double kbps = _processedBits / 1000 / totalSeconds;
-
-            //    Debug.WriteLine($"{kbps} kbps");
-
-            //    _processedBits = 0;
-            //}
         }
 
         private void TapTheMicrophone()
         {
             _audioEngine = new AVAudioEngine();
 
-            var iPhoneformat = new AVAudioFormat(AVAudioCommonFormat.PCMInt32, IPHONE_SAMPLE_RATE, 1, true);
-            var nAudioFormat = new AVAudioFormat(AVAudioCommonFormat.PCMInt16, NAUDIO_SAMPLE_RATE, 1, true);
+            var iPhoneformat = new AVAudioFormat(AVAudioCommonFormat.PCMInt32, IPHONE_SAMPLE_RATE, 1, false);
+            var nAudioFormat = new AVAudioFormat(AVAudioCommonFormat.PCMInt16, NAUDIO_SAMPLE_RATE, 1, false);
 
             _phone2NAudioConverter = new AudioFormatConverter(iPhoneformat, nAudioFormat);
             _nAudio2PhoneConverter = new AudioFormatConverter(nAudioFormat, iPhoneformat);
@@ -116,19 +70,13 @@ namespace iOSGetPCMData.iOS
             NSError error = null;
             bool success = _audioEngine.StartAndReturnError(out error);
 
-            //if (success)
-            //{
-            //    _phone2NAudioConverter = new AudioFormatConverter(iPhoneformat, nAudioFormat);
-            //    _nAudio2PhoneConverter = new AudioFormatConverter(nAudioFormat, iPhoneformat);
+            if (success)
+            {
+                _player = new AVAudioPlayerNode();
+                _audioEngine.AttachNode(_player);
 
-            //    _player = new AVAudioPlayerNode();
-            //    _audioEngine.AttachNode(_player);
-
-            //    _iPhoneFormat = new AVAudioFormat(
-            //        AVAudioCommonFormat.PCMInt32, 48000, (uint)1, false);
-
-            //    _audioEngine.Connect(_player, _audioEngine.MainMixerNode, _iPhoneFormat);
-            //}
+                _audioEngine.Connect(_player, _audioEngine.MainMixerNode, iPhoneformat);
+            }
         }
 
         public void Start()
@@ -143,8 +91,9 @@ namespace iOSGetPCMData.iOS
         public void PlayAudioData(byte[] buffer)
         {
             //AVAudioPcmBuffer toPlay = new AVAudioPcmBuffer(nAudioFormat, (uint)(buffer.Length / 2));
-
-            //_player.ScheduleBuffer(toPlay, null);
+            AVAudioPcmBuffer toPlay16Bit = AVAudioPCMBufferByteConverter.Bytes2PCMBuffer(buffer);
+            AVAudioPcmBuffer toPlay32Bit = _nAudio2PhoneConverter.Convert(toPlay16Bit);
+            _player.ScheduleBuffer(toPlay32Bit, null);
         }
     }
 }

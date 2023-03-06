@@ -16,8 +16,8 @@ namespace iOSGetPCMData.Views
 
         private void Button_Clicked(object sender, EventArgs e)
         {
-            _tcpClient = new TcpClient();
-            _tcpClient.Connect("192.168.1.75", 8550);
+            //_tcpClient = new TcpClient();
+            //_tcpClient.Connect("192.168.1.75", 8550);
 
             App.AudioEngine.OnBufferRead += AudioEngine_OnBufferRead;
             App.AudioEngine.Start();
@@ -25,7 +25,7 @@ namespace iOSGetPCMData.Views
 
         private void AudioEngine_OnBufferRead(byte[] obj)
         {
-            _tcpClient.GetStream().Write(obj, 0, obj.Length);
+            //_tcpClient.GetStream().Write(obj, 0, obj.Length);
 
             Dispatcher.BeginInvokeOnMainThread(() =>
             {
