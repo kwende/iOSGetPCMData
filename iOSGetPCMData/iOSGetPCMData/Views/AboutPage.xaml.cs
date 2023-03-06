@@ -31,6 +31,8 @@ namespace iOSGetPCMData.Views
             {
                 BufferCount.Text = (++_batchCount).ToString();
             });
+
+            App.AudioEngine.PlayAudioData(obj);
         }
     }
 }

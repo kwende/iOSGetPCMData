@@ -7,5 +7,7 @@ namespace iOSGetPCMData
         void Start();
 
         event Action<byte[]> OnBufferRead;
+
+        void PlayAudioData(byte[] data);
     }
 }
