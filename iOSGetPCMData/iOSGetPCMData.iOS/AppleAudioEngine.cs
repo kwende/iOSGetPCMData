@@ -63,17 +63,22 @@ namespace iOSGetPCMData.iOS
             var convertedAudioBuffer = new AVAudioPcmBuffer(_destinationFormat, (uint)(buffer.FrameLength * 2));
             var result = _audioConverter.ConvertToBuffer(convertedAudioBuffer, out _, Turd);
 
-            byte[] toSend = new byte[convertedAudioBuffer.FrameLength * convertedAudioBuffer.Format.StreamDescription.BytesPerFrame];
+            if (result == AVAudioConverterOutputStatus.HaveData ||
+                result == AVAudioConverterOutputStatus.InputRanDry)
+            {
+                byte[] toSend = new byte[convertedAudioBuffer.FrameLength * convertedAudioBuffer.Format.StreamDescription.BytesPerFrame];
 
-            IntPtr[] channelPointerArray = new IntPtr[1];
+                IntPtr[] channelPointerArray = new IntPtr[1];
 
-            Marshal.Copy(convertedAudioBuffer.Int16ChannelData, channelPointerArray, 0, 1);
-            Marshal.Copy(channelPointerArray[0], toSend, 0, toSend.Length);
+                Marshal.Copy(convertedAudioBuffer.Int16ChannelData, channelPointerArray, 0, 1);
+                Marshal.Copy(channelPointerArray[0], toSend, 0, toSend.Length);
 
-            _samplesProcessed += convertedAudioBuffer.FrameLength;
-            OnBufferRead?.Invoke(toSend);
+                _samplesProcessed += convertedAudioBuffer.FrameLength;
+                OnBufferRead?.Invoke(toSend);
 
-            Debug.WriteLine($"{convertedAudioBuffer.FrameLength} rate. {_samplesProcessed} samples processed in total. Should be for {_samplesProcessed / 16000} seconds");
+                Debug.WriteLine($"{convertedAudioBuffer.FrameLength} rate. {_samplesProcessed} samples processed in total. Should be for {_samplesProcessed / 16000} seconds");
+
+            }
 
             //DateTimeOffset now = DateTimeOffset.Now;
 
