@@ -46,6 +46,9 @@ namespace iOSGetPCMData.iOS
             if (audioBuffer4NAudio != null)
             {
                 OnBufferRead?.Invoke(AVAudioPCMBufferByteConverter.PCMBuffer2Bytes(audioBuffer4NAudio));
+
+                var toPlay = _nAudio2PhoneConverter.Convert(audioBuffer4NAudio);
+                _player.ScheduleBuffer(toPlay, null);
             }
         }
 
@@ -77,6 +80,7 @@ namespace iOSGetPCMData.iOS
                 _audioEngine.AttachNode(_player);
 
                 _audioEngine.Connect(_player, _audioEngine.MainMixerNode, mainMixerNodeFormat);
+                _player.Play();
             }
         }
 
@@ -91,9 +95,12 @@ namespace iOSGetPCMData.iOS
 
         public void PlayAudioData(byte[] buffer)
         {
-            AVAudioPcmBuffer toPlay16Bit = AVAudioPCMBufferByteConverter.Bytes2PCMBuffer(buffer);
-            AVAudioPcmBuffer mainMixerNodeBuffer = _nAudio2PhoneConverter.Convert(toPlay16Bit);
-            _player.ScheduleBuffer(mainMixerNodeBuffer, null);
+            //AVAudioPcmBuffer toPlay16Bit = AVAudioPCMBufferByteConverter.Bytes2PCMBuffer(buffer);
+            //AVAudioPcmBuffer mainMixerNodeBuffer = _nAudio2PhoneConverter.Convert(toPlay16Bit);
+            //_player.ScheduleBuffer(mainMixerNodeBuffer, () =>
+            //{
+
+            //});
         }
     }
 }

@@ -30,6 +30,8 @@ namespace iOSGetPCMData.iOS
 
         public static AVAudioPcmBuffer Bytes2PCMBuffer(byte[] input)
         {
+            // options: https://stackoverflow.com/questions/31423790/how-to-play-audio-from-avaudiopcmbuffer-converted-from-nsdata
+
             AVAudioFormat audioFormat = new AVAudioFormat(AVAudioCommonFormat.PCMInt16, 16000, 1, false);
             uint numberOfFramesInData = (uint)(input.Length / audioFormat.StreamDescription.BytesPerFrame);
             AVAudioPcmBuffer ret = new AVAudioPcmBuffer(audioFormat, numberOfFramesInData);
