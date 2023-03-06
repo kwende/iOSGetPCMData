@@ -53,16 +53,17 @@ namespace iOSGetPCMData.iOS
         {
             _audioEngine = new AVAudioEngine();
 
-            var iPhoneformat = new AVAudioFormat(AVAudioCommonFormat.PCMInt32, IPHONE_SAMPLE_RATE, 1, false);
+            var iPhone32BitFormat = new AVAudioFormat(AVAudioCommonFormat.PCMInt32, IPHONE_SAMPLE_RATE, 1, false);
             var nAudioFormat = new AVAudioFormat(AVAudioCommonFormat.PCMInt16, NAUDIO_SAMPLE_RATE, 1, false);
+            var mainMixerNodeFormat = _audioEngine.MainMixerNode.GetBusOutputFormat(0);
 
-            _phone2NAudioConverter = new AudioFormatConverter(iPhoneformat, nAudioFormat);
-            _nAudio2PhoneConverter = new AudioFormatConverter(nAudioFormat, iPhoneformat);
+            _phone2NAudioConverter = new AudioFormatConverter(iPhone32BitFormat, nAudioFormat);
+            _nAudio2PhoneConverter = new AudioFormatConverter(nAudioFormat, mainMixerNodeFormat);
 
             _audioEngine.InputNode.InstallTapOnBus(
                 0, // 0 = "default bus"
                 IPHONE_SAMPLE_RATE * 2, // buffer size, is this right? 
-                iPhoneformat,
+                iPhone32BitFormat,
                 MicrophoneBusTapCallback);
 
             _audioEngine.Prepare();
@@ -75,7 +76,7 @@ namespace iOSGetPCMData.iOS
                 _player = new AVAudioPlayerNode();
                 _audioEngine.AttachNode(_player);
 
-                _audioEngine.Connect(_player, _audioEngine.MainMixerNode, iPhoneformat);
+                _audioEngine.Connect(_player, _audioEngine.MainMixerNode, mainMixerNodeFormat);
             }
         }
 
@@ -90,10 +91,9 @@ namespace iOSGetPCMData.iOS
 
         public void PlayAudioData(byte[] buffer)
         {
-            //AVAudioPcmBuffer toPlay = new AVAudioPcmBuffer(nAudioFormat, (uint)(buffer.Length / 2));
             AVAudioPcmBuffer toPlay16Bit = AVAudioPCMBufferByteConverter.Bytes2PCMBuffer(buffer);
-            AVAudioPcmBuffer toPlay32Bit = _nAudio2PhoneConverter.Convert(toPlay16Bit);
-            _player.ScheduleBuffer(toPlay32Bit, null);
+            AVAudioPcmBuffer mainMixerNodeBuffer = _nAudio2PhoneConverter.Convert(toPlay16Bit);
+            _player.ScheduleBuffer(mainMixerNodeBuffer, null);
         }
     }
 }

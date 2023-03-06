@@ -35,7 +35,7 @@ namespace iOSGetPCMData.iOS
             AVAudioPcmBuffer ret = new AVAudioPcmBuffer(audioFormat, numberOfFramesInData);
 
             IntPtr[] channelPtrs = new IntPtr[1];
-            Marshal.Copy(ret.Int32ChannelData, channelPtrs, 0, 1);
+            Marshal.Copy(ret.Int16ChannelData, channelPtrs, 0, 1);
             Marshal.Copy(input, 0, channelPtrs[0], input.Length);
 
             ret.FrameLength = numberOfFramesInData;
