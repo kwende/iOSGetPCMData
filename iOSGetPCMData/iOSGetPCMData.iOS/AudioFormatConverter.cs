@@ -26,7 +26,8 @@ namespace iOSGetPCMData.iOS
             var convertedAudioBuffer = new AVAudioPcmBuffer(_destinationFormat, (uint)(input.FrameLength * 10));
             var result = _audioConverter.ConvertToBuffer(convertedAudioBuffer, out _, ConverterCallback);
 
-            if (result == AVAudioConverterOutputStatus.HaveData)
+            if (result == AVAudioConverterOutputStatus.HaveData ||
+                result == AVAudioConverterOutputStatus.InputRanDry)
             {
                 return convertedAudioBuffer;
             }
@@ -50,7 +51,7 @@ namespace iOSGetPCMData.iOS
 
         private AVAudioBuffer ConverterCallback(uint inNumberOfPackets, out AVAudioConverterInputStatus outStatus)
         {
-            if (inNumberOfPackets > 0)
+            if (_haveFreshData)
             {
                 outStatus = AVAudioConverterInputStatus.HaveData;
                 _haveFreshData = false;
